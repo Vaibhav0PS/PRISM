@@ -7,6 +7,8 @@ const DonorDashboard = () => {
   const [activeTab, setActiveTab] = useState('requests');
   const [requests, setRequests] = useState([]);
   const [interests, setInterests] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [requestStudents, setRequestStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -25,7 +27,7 @@ const DonorDashboard = () => {
       setLoading(true);
       setError(null);
       
-      // Try to load verified and listed requests
+      // Try to load approved and listed requests (admin verified)
       try {
         const { data: requestsData, error: requestsError } = await supabase
           .from('requests')
@@ -92,6 +94,37 @@ const DonorDashboard = () => {
     }
   };
 
+  const loadRequestStudents = async (requestId, schoolId) => {
+    try {
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select(`
+          *,
+          schools (
+            name,
+            udise_id
+          )
+        `)
+        .eq('school_id', schoolId)
+        .eq('scholarship_eligible', true)
+        .order('created_at', { ascending: false });
+
+      if (studentsError) throw studentsError;
+      
+      setRequestStudents(studentsData || []);
+    } catch (err) {
+      console.error('Error loading students:', err);
+      setError(err.message);
+    }
+  };
+
+  const handleViewRequest = async (request) => {
+    setSelectedRequest(request);
+    if (request.schools?.id) {
+      await loadRequestStudents(request.id, request.schools.id);
+    }
+  };
+
   const handleShowInterest = async (requestId, message = '') => {
     try {
       const { error } = await supabase
@@ -110,6 +143,44 @@ const DonorDashboard = () => {
 
     } catch (err) {
       console.error('Error showing interest:', err);
+      setError(err.message);
+    }
+  };
+
+  const handleAcceptRequest = async (requestId, commitmentAmount, message = '') => {
+    try {
+      // Update or create interest with committed status
+      const { error: interestError } = await supabase
+        .from('interests')
+        .upsert([{
+          donor_id: user.id,
+          request_id: requestId,
+          message: message || 'I am committed to supporting this request.',
+          status: INTEREST_STATUS.COMMITTED,
+          commitment_amount: commitmentAmount
+        }], {
+          onConflict: 'donor_id,request_id'
+        });
+
+      if (interestError) throw interestError;
+
+      // Optionally update request status to show it has committed funding
+      const { error: requestError } = await supabase
+        .from('requests')
+        .update({ 
+          status: REQUEST_STATUS.COMPLETED,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', requestId);
+
+      if (requestError) throw requestError;
+
+      // Reload data
+      loadDashboardData();
+      setSelectedRequest(null);
+
+    } catch (err) {
+      console.error('Error accepting request:', err);
       setError(err.message);
     }
   };
@@ -380,7 +451,13 @@ const DonorDashboard = () => {
                           </div>
                         </div>
                         
-                        <div className="flex justify-end">
+                        <div className="flex justify-end space-x-3">
+                          <button
+                            onClick={() => handleViewRequest(request)}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-medium"
+                          >
+                            View Details & Students
+                          </button>
                           {hasUserInterest(request.id) ? (
                             <span className="inline-flex items-center px-3 py-2 border border-green-300 text-sm leading-4 font-medium rounded-md text-green-700 bg-green-50">
                               ✓ Interest Shown
@@ -441,6 +518,214 @@ const DonorDashboard = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Request Details Modal */}
+        {selectedRequest && (
+          <RequestDetailsModal 
+            request={selectedRequest}
+            students={requestStudents}
+            onClose={() => {
+              setSelectedRequest(null);
+              setRequestStudents([]);
+            }}
+            onAccept={handleAcceptRequest}
+            hasInterest={hasUserInterest(selectedRequest.id)}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Request Details Modal Component
+const RequestDetailsModal = ({ request, students, onClose, onAccept, hasInterest }) => {
+  const [commitmentAmount, setCommitmentAmount] = useState(request.amount_estimate || '');
+  const [commitmentMessage, setCommitmentMessage] = useState('');
+  const [showCommitForm, setShowCommitForm] = useState(false);
+
+  const handleCommit = () => {
+    if (commitmentAmount && commitmentAmount > 0) {
+      onAccept(request.id, parseFloat(commitmentAmount), commitmentMessage);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold text-gray-900">{request.title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Request Details */}
+          <div>
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">Request Information</h4>
+            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+              <div>
+                <span className="font-medium text-gray-700">Description:</span>
+                <p className="text-gray-600 mt-1">{request.description}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">School:</span>
+                <p className="text-gray-600">{request.schools?.name}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">UDISE ID:</span>
+                <p className="text-gray-600">{request.schools?.udise_id}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Location:</span>
+                <p className="text-gray-600">{request.schools?.location}, {request.schools?.region}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Type:</span>
+                <p className="text-gray-600 capitalize">{request.type}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Estimated Amount:</span>
+                <p className="text-gray-600 text-lg font-semibold">₹{request.amount_estimate?.toLocaleString()}</p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Status:</span>
+                <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                  {request.status}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Students List */}
+          <div>
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">
+              Eligible Students ({students.length})
+            </h4>
+            <div className="max-h-96 overflow-y-auto">
+              {students.length > 0 ? (
+                <div className="space-y-3">
+                  {students.map((student) => (
+                    <div key={student.id} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h5 className="font-medium text-gray-900">{student.student_name}</h5>
+                          <p className="text-sm text-gray-600">ID: {student.student_id}</p>
+                          <p className="text-sm text-gray-600">Class: {student.class_grade}</p>
+                          {student.father_name && (
+                            <p className="text-sm text-gray-600">Father: {student.father_name}</p>
+                          )}
+                          {student.category && (
+                            <p className="text-sm text-gray-600">Category: {student.category.toUpperCase()}</p>
+                          )}
+                          {student.scholarship_amount && (
+                            <p className="text-sm font-medium text-green-600">
+                              Scholarship: ₹{student.scholarship_amount.toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          {student.documents_url && student.documents_url.length > 0 ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {student.documents_url.length} docs
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              No docs
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No verified students found for this request.</p>
+                  <p className="text-sm mt-2">Students need to be verified by admin first.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          {!showCommitForm ? (
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+              {hasInterest ? (
+                <button
+                  onClick={() => setShowCommitForm(true)}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium"
+                >
+                  Commit to Fund
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowCommitForm(true)}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium"
+                >
+                  Accept & Fund Request
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="bg-green-50 p-6 rounded-lg">
+              <h5 className="text-lg font-medium text-gray-900 mb-4">Commit to Funding</h5>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Commitment Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={commitmentAmount}
+                    onChange={(e) => setCommitmentAmount(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Enter amount"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Message (Optional)
+                  </label>
+                  <textarea
+                    value={commitmentMessage}
+                    onChange={(e) => setCommitmentMessage(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Add a message for the school..."
+                    rows="2"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-4 mt-6">
+                <button
+                  onClick={() => setShowCommitForm(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCommit}
+                  disabled={!commitmentAmount || commitmentAmount <= 0}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-md font-medium"
+                >
+                  Confirm Commitment
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

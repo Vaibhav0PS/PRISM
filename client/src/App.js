@@ -9,6 +9,7 @@ import SchoolDashboard from './pages/SchoolDashboard';
 import DonorDashboard from './pages/DonorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import UserRoleDebug from './components/UserRoleDebug';
 import './App.css';
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <UserRoleDebug />
         </div>
       </Router>
     </AuthProvider>

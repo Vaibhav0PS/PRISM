@@ -20,6 +20,17 @@ const Login = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
+  // Prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        clearError();
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading, clearError]);
+
   // Clear error when component mounts
   useEffect(() => {
     clearError();
@@ -50,27 +61,13 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🚀 Login: Form submitted', formData);
     
     if (!formData.email || !formData.password) {
-      console.log('❌ Login: Missing email or password');
-      alert('Please enter both email and password');
       return;
     }
 
-    console.log('✅ Login: Calling signIn');
-    const result = await signIn(formData.email, formData.password);
-    
-    console.log('📊 Login: SignIn result', result);
-    
-    if (result.success) {
-      console.log('🎉 Login: Success, navigation will be handled by useEffect');
-      alert('Login successful! Redirecting...');
-      // Navigation will be handled by useEffect when user state updates
-    } else {
-      console.log('❌ Login: Failed', result.error);
-      alert(`Login failed: ${result.error}`);
-    }
+    await signIn(formData.email, formData.password);
+    // Navigation will be handled by useEffect when user state updates
   };
 
   return (

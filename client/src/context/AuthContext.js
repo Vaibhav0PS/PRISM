@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -49,120 +49,101 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check user session on mount
+  // Helper function to get user role
+  const getUserRole = async (user) => {
+    // Try to get role from user metadata first
+    let userRole = user.user_metadata?.role;
+    
+    // If no role in metadata, check database
+    if (!userRole) {
+      try {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        userRole = profile?.role || 'donor';
+      } catch (dbError) {
+        console.warn('Could not fetch user role from database:', dbError.message);
+        userRole = 'donor'; // Default fallback
+      }
+    }
+    
+    return userRole;
+  };
+
+  // Optimized auth initialization
   useEffect(() => {
     let mounted = true;
-    
+    let authSubscription = null;
+
     const initAuth = async () => {
       try {
-        dispatch({ type: 'SET_LOADING', payload: true });
+        // Get current session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (mounted) {
           if (session?.user) {
-            // Try to load user profile from database
-            try {
-              const { data: profile, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+            const userRole = await getUserRole(session.user);
 
-              if (profile && !error) {
-                // Use database profile
-                const user = {
-                  id: session.user.id,
-                  email: session.user.email,
-                  ...profile
-                };
-                dispatch({ type: 'SET_USER', payload: user });
-              } else {
-                // Fallback to basic user object
-                const basicUser = {
-                  id: session.user.id,
-                  email: session.user.email,
-                  name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-                  role: 'donor'
-                };
-                dispatch({ type: 'SET_USER', payload: basicUser });
-              }
-            } catch (dbError) {
-              // Database not available, use basic user
-              const basicUser = {
-                id: session.user.id,
-                email: session.user.email,
-                name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-                role: 'donor'
-              };
-              dispatch({ type: 'SET_USER', payload: basicUser });
-            }
+            const user = {
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+              role: userRole
+            };
+            dispatch({ type: 'SET_USER', payload: user });
           } else {
             dispatch({ type: 'SET_USER', payload: null });
           }
         }
       } catch (error) {
         if (mounted) {
-          console.error('Error checking user:', error);
-          dispatch({ type: 'SET_ERROR', payload: error.message });
+          console.error('Auth initialization error:', error);
+          dispatch({ type: 'SET_USER', payload: null });
         }
       }
     };
 
-    initAuth();
-    
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (mounted) {
-          if (session?.user) {
-            // Try to load user profile from database
-            try {
-              const { data: profile, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+    // Set up auth state listener
+    const setupAuthListener = () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (_, session) => {
+          if (!mounted) return;
 
-              if (profile && !error) {
-                const user = {
-                  id: session.user.id,
-                  email: session.user.email,
-                  ...profile
-                };
-                dispatch({ type: 'SET_USER', payload: user });
-              } else {
-                const basicUser = {
-                  id: session.user.id,
-                  email: session.user.email,
-                  name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-                  role: 'donor'
-                };
-                dispatch({ type: 'SET_USER', payload: basicUser });
-              }
-            } catch (dbError) {
-              const basicUser = {
-                id: session.user.id,
-                email: session.user.email,
-                name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-                role: 'donor'
-              };
-              dispatch({ type: 'SET_USER', payload: basicUser });
-            }
+          if (session?.user) {
+            const userRole = await getUserRole(session.user);
+
+            const user = {
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+              role: userRole
+            };
+            dispatch({ type: 'SET_USER', payload: user });
           } else {
             dispatch({ type: 'SET_USER', payload: null });
           }
         }
-      }
-    );
+      );
+      authSubscription = subscription;
+    };
 
+    // Initialize
+    initAuth();
+    setupAuthListener();
+
+    // Cleanup
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
-
-
+  // Optimized sign up
   const signUp = async (email, password, userData) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -171,40 +152,30 @@ export const AuthProvider = ({ children }) => {
       // Sign up with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            name: userData.name,
+            role: userData.role
+          }
+        }
       });
 
       if (authError) throw authError;
 
-      // Try to create user profile in database
+      // Try to create user profile (non-blocking)
       try {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([{
-            id: authData.user.id,
-            email: authData.user.email,
-            name: userData.name,
-            role: userData.role
-          }]);
-
-        if (profileError) {
-          console.warn('Profile creation failed, using auth-only mode:', profileError.message);
-        }
-      } catch (profileErr) {
-        console.warn('Database not available, using auth-only mode:', profileErr.message);
+        await supabase.from('users').insert([{
+          id: authData.user.id,
+          email: authData.user.email,
+          name: userData.name,
+          role: userData.role
+        }]);
+      } catch (profileError) {
+        console.warn('Profile creation failed (non-critical):', profileError.message);
       }
 
-      // Create user object for state
-      const user = {
-        id: authData.user.id,
-        email: authData.user.email,
-        name: userData.name,
-        role: userData.role
-      };
-
-      dispatch({ type: 'SET_USER', payload: user });
       return { success: true, data: authData };
-      
     } catch (error) {
       console.error('Sign up error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message });
@@ -214,6 +185,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Optimized sign in
   const signIn = async (email, password) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -236,6 +208,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Sign out
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
