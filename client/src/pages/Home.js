@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import SupabaseTest from '../components/SupabaseTest';
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth();
@@ -34,6 +33,11 @@ const Home = () => {
               Connecting rural and underfunded schools with donors and NGOs for 
               verified student scholarships and infrastructure support.
             </p>
+            {isAuthenticated && (
+              <div className="bg-green-100 text-green-800 px-6 py-3 rounded-lg mb-6 inline-block">
+                ✅ Welcome back, {user.name}! Your account is active and ready.
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
                 <Link 
@@ -189,8 +193,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Supabase Test - Remove in production */}
-      <SupabaseTest />
+
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-700 text-white">

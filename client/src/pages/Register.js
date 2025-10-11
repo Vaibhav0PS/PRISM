@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { USER_ROLES, supabase } from '../lib/supabase';
-import SupabaseTest from '../components/SupabaseTest';
-import DatabaseStatus from '../components/DatabaseStatus';
+import { USER_ROLES } from '../lib/supabase';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -76,30 +74,18 @@ const Register = () => {
     
     const validationError = validateForm();
     if (validationError) {
-      console.log('Validation error:', validationError);
       return;
     }
 
-    try {
-      console.log('Starting registration process...');
-      const { confirmPassword, ...userData } = formData;
-      console.log('User data:', userData);
-      
-      const result = await signUp(formData.email, formData.password, userData);
-      console.log('Registration result:', result);
-      
-      if (result.success) {
-        console.log('Registration successful, navigating to login');
-        navigate('/login', { 
-          state: { 
-            message: 'Account created successfully! Please check your email to verify your account.' 
-          }
-        });
-      } else {
-        console.log('Registration failed:', result.error);
-      }
-    } catch (err) {
-      console.error('Registration error:', err);
+    const { confirmPassword, ...userData } = formData;
+    const result = await signUp(formData.email, formData.password, userData);
+    
+    if (result.success) {
+      navigate('/login', { 
+        state: { 
+          message: 'Account created successfully! Please check your email to verify your account.' 
+        }
+      });
     }
   };
 
@@ -311,72 +297,7 @@ const Register = () => {
           </div>
         </form>
         
-        {/* Database Status Check */}
-        <DatabaseStatus />
-        
-        {/* Emergency Bypass Button */}
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded">
-          <h4 className="font-medium text-red-800 mb-2">🚨 Emergency Test (Database Not Ready)</h4>
-          <p className="text-sm text-red-700 mb-3">
-            If registration is stuck, try this auth-only test (no database required):
-          </p>
-          <button
-            onClick={async () => {
-              try {
-                console.log('Testing auth-only signup...');
-                const testEmail = `test${Date.now()}@example.com`;
-                const { data, error } = await supabase.auth.signUp({
-                  email: testEmail,
-                  password: 'testpass123'
-                });
-                
-                if (error) {
-                  alert(`Auth Error: ${error.message}`);
-                } else {
-                  alert(`✅ Auth works! User created: ${data.user?.id}\nEmail: ${testEmail}\n\nNow set up the database to complete registration.`);
-                }
-              } catch (err) {
-                alert(`❌ Error: ${err.message}`);
-              }
-            }}
-            className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
-          >
-            Test Auth Only (Bypass Database)
-          </button>
-        </div>
-        
-        {/* Debugging Tools */}
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-            🔧 Show Debug Tools
-          </summary>
-          <div className="mt-2 space-y-4">
-            <SupabaseTest />
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-              <h4 className="font-medium text-yellow-800 mb-2">Quick Auth Test</h4>
-              <button
-                onClick={async () => {
-                  console.log('Testing direct Supabase auth...');
-                  try {
-                    const testEmail = `test${Date.now()}@example.com`;
-                    const result = await supabase.auth.signUp({
-                      email: testEmail,
-                      password: 'testpass123'
-                    });
-                    console.log('Direct auth test result:', result);
-                    alert(`Direct test result: ${result.error ? result.error.message : 'Success!'}`);
-                  } catch (err) {
-                    console.error('Direct test error:', err);
-                    alert(`Direct test error: ${err.message}`);
-                  }
-                }}
-                className="bg-yellow-600 text-white px-4 py-2 rounded text-sm"
-              >
-                Test Direct Auth
-              </button>
-            </div>
-          </div>
-        </details>
+
       </div>
     </div>
   );

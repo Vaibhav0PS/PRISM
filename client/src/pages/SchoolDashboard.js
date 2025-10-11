@@ -35,38 +35,53 @@ const SchoolDashboard = () => {
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       setError(null); // Clear any previous errors
       
-      // Load school data
-      const { data: schoolData, error: schoolError } = await supabase
-        .from('schools')
-        .select('*')
-        .eq('admin_id', user.id)
-        .single();
-
-      if (schoolError && schoolError.code !== 'PGRST116') {
-        throw schoolError;
-      }
-
-      setSchool(schoolData);
-
-      // Load requests if school exists
-      if (schoolData) {
-        const { data: requestsData, error: requestsError } = await supabase
-          .from('requests')
+      // Try to load school data, but handle database not existing
+      try {
+        const { data: schoolData, error: schoolError } = await supabase
+          .from('schools')
           .select('*')
-          .eq('school_id', schoolData.id)
-          .order('created_at', { ascending: false });
+          .eq('admin_id', user.id)
+          .single();
 
-        if (requestsError) throw requestsError;
-        setRequests(requestsData || []);
-      } else {
+        if (schoolError && schoolError.code !== 'PGRST116') {
+          // If it's not a "no rows" error, it might be a table doesn't exist error
+          if (schoolError.message.includes('relation') && schoolError.message.includes('does not exist')) {
+            console.warn('Schools table does not exist - auth-only mode');
+            setSchool(null);
+            setRequests([]);
+            setError('Database tables not set up yet. You can still use authentication features.');
+            return;
+          }
+          throw schoolError;
+        }
+
+        setSchool(schoolData);
+
+        // Load requests if school exists
+        if (schoolData) {
+          const { data: requestsData, error: requestsError } = await supabase
+            .from('requests')
+            .select('*')
+            .eq('school_id', schoolData.id)
+            .order('created_at', { ascending: false });
+
+          if (requestsError) throw requestsError;
+          setRequests(requestsData || []);
+        } else {
+          setRequests([]);
+        }
+      } catch (dbError) {
+        console.warn('Database error - running in auth-only mode:', dbError.message);
+        setSchool(null);
         setRequests([]);
+        setError('Database not set up yet. Authentication works, but school features require database setup.');
       }
 
     } catch (err) {
@@ -227,7 +242,15 @@ const SchoolDashboard = () => {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
             <div className="flex items-center justify-between">
-              <span>{error}</span>
+              <div>
+                <div className="font-medium">Dashboard Error</div>
+                <div className="text-sm mt-1">{error}</div>
+                {error.includes('Database not set up') && (
+                  <div className="text-sm mt-2">
+                    <strong>Note:</strong> Authentication works, but school features require database setup.
+                  </div>
+                )}
+              </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => {

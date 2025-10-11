@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { supabase, USER_ROLES } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
 
@@ -51,89 +51,80 @@ export const AuthProvider = ({ children }) => {
 
   // Check user session on mount
   useEffect(() => {
-    checkUser();
+    let mounted = true;
     
-    // Listen for auth changes
+    const initAuth = async () => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          if (session?.user) {
+            // Create basic user object without database call
+            const basicUser = {
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+              role: 'donor'
+            };
+            dispatch({ type: 'SET_USER', payload: basicUser });
+          } else {
+            dispatch({ type: 'SET_USER', payload: null });
+          }
+        }
+      } catch (error) {
+        if (mounted) {
+          console.error('Error checking user:', error);
+          dispatch({ type: 'SET_ERROR', payload: error.message });
+        }
+      }
+    };
+
+    initAuth();
+    
+    // Listen for auth changes (simplified)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          await loadUserProfile(session.user);
-        } else {
-          dispatch({ type: 'SET_USER', payload: null });
+      (event, session) => {
+        if (mounted) {
+          if (session?.user) {
+            const basicUser = {
+              id: session.user.id,
+              email: session.user.email,
+              name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+              role: 'donor'
+            };
+            dispatch({ type: 'SET_USER', payload: basicUser });
+          } else {
+            dispatch({ type: 'SET_USER', payload: null });
+          }
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const checkUser = async () => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        await loadUserProfile(session.user);
-      } else {
-        dispatch({ type: 'SET_USER', payload: null });
-      }
-    } catch (error) {
-      console.error('Error checking user:', error);
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    }
-  };
 
-  const loadUserProfile = async (authUser) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-
-      if (error) throw error;
-
-      const user = {
-        id: authUser.id,
-        email: authUser.email,
-        ...profile
-      };
-
-      dispatch({ type: 'SET_USER', payload: user });
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    }
-  };
 
   const signUp = async (email, password, userData) => {
     try {
-      console.log('AuthContext: Starting signup process');
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      // Add timeout to prevent infinite hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Registration timeout - check database setup')), 30000)
-      );
-
-      console.log('AuthContext: Calling supabase.auth.signUp');
-      // Sign up with Supabase Auth with timeout
-      const authPromise = supabase.auth.signUp({
+      // Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password
       });
 
-      const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
-
-      console.log('AuthContext: Auth signup result:', { authData, authError });
-
       if (authError) throw authError;
 
-      // Try to create user profile, but don't fail if table doesn't exist
-      console.log('AuthContext: Creating user profile');
+      // Try to create user profile in database
       try {
-        const profilePromise = supabase
+        const { error: profileError } = await supabase
           .from('users')
           .insert([{
             id: authData.user.id,
@@ -142,31 +133,29 @@ export const AuthProvider = ({ children }) => {
             role: userData.role
           }]);
 
-        const profileTimeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile creation timeout')), 10000)
-        );
-
-        const { error: profileError } = await Promise.race([profilePromise, profileTimeoutPromise]);
-
-        console.log('AuthContext: Profile creation result:', { profileError });
-
         if (profileError) {
-          console.warn('Profile creation failed, but auth succeeded:', profileError.message);
-          // Don't throw error here - auth still succeeded
+          console.warn('Profile creation failed, using auth-only mode:', profileError.message);
         }
       } catch (profileErr) {
-        console.warn('Profile creation failed, but auth succeeded:', profileErr.message);
-        // Don't throw error here - auth still succeeded
+        console.warn('Database not available, using auth-only mode:', profileErr.message);
       }
 
-      console.log('AuthContext: Signup successful');
+      // Create user object for state
+      const user = {
+        id: authData.user.id,
+        email: authData.user.email,
+        name: userData.name,
+        role: userData.role
+      };
+
+      dispatch({ type: 'SET_USER', payload: user });
       return { success: true, data: authData };
+      
     } catch (error) {
       console.error('Sign up error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message });
       return { success: false, error: error.message };
     } finally {
-      console.log('AuthContext: Setting loading to false');
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };

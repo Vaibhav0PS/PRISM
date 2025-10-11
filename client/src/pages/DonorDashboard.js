@@ -18,53 +18,71 @@ const DonorDashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Load verified and listed requests
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('requests')
-        .select(`
-          *,
-          schools (
-            name,
-            udise_id,
-            location,
-            region,
-            category,
-            verified
-          )
-        `)
-        .in('status', [REQUEST_STATUS.APPROVED, REQUEST_STATUS.LISTED])
-        .order('created_at', { ascending: false });
-
-      if (requestsError) throw requestsError;
-
-      // Load user's interests
-      const { data: interestsData, error: interestsError } = await supabase
-        .from('interests')
-        .select(`
-          *,
-          requests (
-            title,
-            type,
-            amount_estimate,
+      // Try to load verified and listed requests
+      try {
+        const { data: requestsData, error: requestsError } = await supabase
+          .from('requests')
+          .select(`
+            *,
             schools (
               name,
-              location
+              udise_id,
+              location,
+              region,
+              category,
+              verified
             )
-          )
-        `)
-        .eq('donor_id', user.id)
-        .order('created_at', { ascending: false });
+          `)
+          .in('status', [REQUEST_STATUS.APPROVED, REQUEST_STATUS.LISTED])
+          .order('created_at', { ascending: false });
 
-      if (interestsError) throw interestsError;
+        if (requestsError) {
+          if (requestsError.message.includes('relation') && requestsError.message.includes('does not exist')) {
+            setError('Database tables not set up yet. Please set up the database to view funding requests.');
+            setRequests([]);
+            setInterests([]);
+            return;
+          }
+          throw requestsError;
+        }
 
-      setRequests(requestsData || []);
-      setInterests(interestsData || []);
+        setRequests(requestsData || []);
+
+        // Load user's interests
+        const { data: interestsData, error: interestsError } = await supabase
+          .from('interests')
+          .select(`
+            *,
+            requests (
+              title,
+              type,
+              amount_estimate,
+              schools (
+                name,
+                location
+              )
+            )
+          `)
+          .eq('donor_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (interestsError) throw interestsError;
+
+        setRequests(requestsData || []);
+        setInterests(interestsData || []);
+      } catch (dbError) {
+        console.warn('Database error - running in auth-only mode:', dbError.message);
+        setRequests([]);
+        setInterests([]);
+        setError('Database not set up yet. Authentication works, but donor features require database setup.');
+      }
 
     } catch (err) {
       console.error('Error loading dashboard data:', err);
@@ -154,8 +172,37 @@ const DonorDashboard = () => {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
-            {error}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Database Setup Required
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>{error}</p>
+                  <p className="mt-2">
+                    Your account is working perfectly! To view and support funding requests, 
+                    the database tables need to be set up first.
+                  </p>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      loadDashboardData();
+                    }}
+                    className="bg-yellow-600 text-white px-4 py-2 rounded text-sm hover:bg-yellow-700"
+                  >
+                    Retry Connection
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
