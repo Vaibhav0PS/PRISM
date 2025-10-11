@@ -60,14 +60,42 @@ export const AuthProvider = ({ children }) => {
         
         if (mounted) {
           if (session?.user) {
-            // Create basic user object without database call
-            const basicUser = {
-              id: session.user.id,
-              email: session.user.email,
-              name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-              role: 'donor'
-            };
-            dispatch({ type: 'SET_USER', payload: basicUser });
+            // Try to load user profile from database
+            try {
+              const { data: profile, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+              if (profile && !error) {
+                // Use database profile
+                const user = {
+                  id: session.user.id,
+                  email: session.user.email,
+                  ...profile
+                };
+                dispatch({ type: 'SET_USER', payload: user });
+              } else {
+                // Fallback to basic user object
+                const basicUser = {
+                  id: session.user.id,
+                  email: session.user.email,
+                  name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                  role: 'donor'
+                };
+                dispatch({ type: 'SET_USER', payload: basicUser });
+              }
+            } catch (dbError) {
+              // Database not available, use basic user
+              const basicUser = {
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                role: 'donor'
+              };
+              dispatch({ type: 'SET_USER', payload: basicUser });
+            }
           } else {
             dispatch({ type: 'SET_USER', payload: null });
           }
@@ -82,18 +110,44 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
     
-    // Listen for auth changes (simplified)
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (mounted) {
           if (session?.user) {
-            const basicUser = {
-              id: session.user.id,
-              email: session.user.email,
-              name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-              role: 'donor'
-            };
-            dispatch({ type: 'SET_USER', payload: basicUser });
+            // Try to load user profile from database
+            try {
+              const { data: profile, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+              if (profile && !error) {
+                const user = {
+                  id: session.user.id,
+                  email: session.user.email,
+                  ...profile
+                };
+                dispatch({ type: 'SET_USER', payload: user });
+              } else {
+                const basicUser = {
+                  id: session.user.id,
+                  email: session.user.email,
+                  name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                  role: 'donor'
+                };
+                dispatch({ type: 'SET_USER', payload: basicUser });
+              }
+            } catch (dbError) {
+              const basicUser = {
+                id: session.user.id,
+                email: session.user.email,
+                name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                role: 'donor'
+              };
+              dispatch({ type: 'SET_USER', payload: basicUser });
+            }
           } else {
             dispatch({ type: 'SET_USER', payload: null });
           }

@@ -96,7 +96,7 @@ const Register = () => {
       case USER_ROLES.DONOR:
         return 'Browse verified requests and support schools and students';
       case USER_ROLES.ADMIN:
-        return 'Admin access for platform management and verification';
+        return 'Platform administrator - verify schools, approve requests, manage users';
       default:
         return '';
     }
@@ -146,6 +146,7 @@ const Register = () => {
               >
                 <option value={USER_ROLES.DONOR}>Donor/NGO</option>
                 <option value={USER_ROLES.SCHOOL_ADMIN}>School Administrator</option>
+                <option value={USER_ROLES.ADMIN}>Platform Administrator</option>
               </select>
               <p className="mt-1 text-sm text-gray-500">
                 {getRoleDescription(formData.role)}
