@@ -30,40 +30,22 @@ const DonorDashboard = () => {
       
       // Load all verified schools for donors to browse
       try {
-        const { data: schoolsData, error: schoolsError } = await supabase
-          .from('schools')
-          .select(`
-            *,
-            requests!inner (
-              id,
-              title,
-              type,
-              status,
-              amount_estimate,
-              created_at
-            )
-          `)
-          .eq('verified', true)
-          .order('created_at', { ascending: false });
-
-        if (schoolsError) {
-          if (schoolsError.message.includes('relation') && schoolsError.message.includes('does not exist')) {
-            setError('Database tables not set up yet. Please set up the database to view schools.');
-            setRequests([]);
-            setInterests([]);
-            return;
-          }
-          throw schoolsError;
-        }
-
-        // Also load all verified schools (even without requests) for direct sponsorship
+        // Load all verified schools (even without requests) for direct sponsorship
         const { data: allSchoolsData, error: allSchoolsError } = await supabase
           .from('schools')
           .select('*')
           .eq('verified', true)
           .order('created_at', { ascending: false });
 
-        if (allSchoolsError) throw allSchoolsError;
+        if (allSchoolsError) {
+          if (allSchoolsError.message.includes('relation') && allSchoolsError.message.includes('does not exist')) {
+            setError('Database tables not set up yet. Please set up the database to view schools.');
+            setRequests([]);
+            setInterests([]);
+            return;
+          }
+          throw allSchoolsError;
+        }
 
         setRequests(allSchoolsData || []);
 
@@ -275,15 +257,78 @@ const DonorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="bg-white shadow rounded-lg mb-6">
-          <div className="px-4 py-5 sm:p-6">
-            <h1 className="text-2xl font-bold text-gray-900">Donor Dashboard</h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Welcome back, {user?.name}! Browse verified requests and track your impact.
-            </p>
+        {/* Enhanced Header with Educational Background */}
+        <div className="shadow-xl rounded-2xl mb-8 overflow-hidden relative">
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: 'url(https://i0.wp.com/vikalpsangam.org/wp-content/uploads/migrate/LearningandEducation/kaliyuva1.jpg?w=1024&ssl=1)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          ></div>
+          
+          {/* Light overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/40"></div>
+          
+          <div className="px-8 py-12 relative z-10">
+            {/* Decorative Elements */}
+            <div className="absolute top-4 right-4 opacity-20">
+              <svg className="w-24 h-24 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-6">
+                  <div className="h-20 w-20 bg-yellow-400 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20">
+                    <span className="text-blue-600 font-bold text-3xl">शि</span>
+                  </div>
+                  <div>
+                    <h1 className="text-4xl font-bold text-white mb-2" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+                      Donor Dashboard
+                    </h1>
+                    <p className="text-white text-xl mb-1" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                      Welcome back, <span className="font-bold text-yellow-300">{user?.name}</span>! 
+                    </p>
+                    <p className="text-blue-100 text-base" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                      Transform lives through education with Shiksha Setu
+                    </p>
+                  </div>
+                </div>
+                <div className="hidden md:block">
+                  <div className="text-right text-white bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                    <div className="text-4xl mb-2">🎯</div>
+                    <div className="text-lg font-semibold text-yellow-300">Making Impact</div>
+                    <div className="text-sm text-blue-100">Every Day</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Additional Welcome Message */}
+              <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    <svg className="w-8 h-8 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-lg" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                      Ready to make a difference? Browse verified schools and support students in need.
+                    </p>
+                    <p className="text-blue-100 text-sm mt-1" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                      Your contribution can change lives and build a brighter future for education in India.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -322,96 +367,126 @@ const DonorDashboard = () => {
           </div>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">📋</span>
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Verified Schools</dt>
+                    <dd className="text-3xl font-bold text-gray-900">{requests.length}</dd>
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Verified Schools</dt>
-                    <dd className="text-lg font-medium text-gray-900">{requests.length}</dd>
-                  </dl>
+                <div className="text-blue-500">
+                  <div className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Available
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">💝</span>
+          <div className="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Your Interests</dt>
+                    <dd className="text-3xl font-bold text-gray-900">{interests.length}</dd>
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Your Interests</dt>
-                    <dd className="text-lg font-medium text-gray-900">{interests.length}</dd>
-                  </dl>
+                <div className="text-yellow-500">
+                  <div className="text-xs font-medium bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                    Tracking
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">📊</span>
+          <div className="bg-white overflow-hidden shadow-xl rounded-2xl border border-gray-100 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <dt className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Active Donations</dt>
+                    <dd className="text-3xl font-bold text-gray-900">{impactData.length}</dd>
                   </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Active Donations</dt>
-                    <dd className="text-lg font-medium text-gray-900">{impactData.length}</dd>
-                  </dl>
+                <div className="text-green-500">
+                  <div className="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    Impact
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
+        {/* Enhanced Tabs */}
+        <div className="bg-white shadow-xl rounded-2xl border border-gray-100">
+          <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-2xl">
+            <nav className="-mb-px flex space-x-1 px-6">
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-6 border-b-3 font-semibold text-sm rounded-t-lg transition-all duration-200 ${
                   activeTab === 'requests'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-600 bg-white shadow-sm'
+                    : 'border-transparent text-gray-600 hover:text-blue-600 hover:bg-white/50'
                 }`}
               >
-                Verified Schools
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+                  </svg>
+                  <span>Verified Schools</span>
+                </div>
               </button>
               <button
                 onClick={() => setActiveTab('interests')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-6 border-b-3 font-semibold text-sm rounded-t-lg transition-all duration-200 ${
                   activeTab === 'interests'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-600 bg-white shadow-sm'
+                    : 'border-transparent text-gray-600 hover:text-blue-600 hover:bg-white/50'
                 }`}
               >
-                My Interests
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span>My Interests</span>
+                </div>
               </button>
               <button
                 onClick={() => setActiveTab('impact')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-6 border-b-3 font-semibold text-sm rounded-t-lg transition-all duration-200 ${
                   activeTab === 'impact'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-600 bg-white shadow-sm'
+                    : 'border-transparent text-gray-600 hover:text-blue-600 hover:bg-white/50'
                 }`}
               >
-                Impact Dashboard
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span>Impact Dashboard</span>
+                </div>
               </button>
             </nav>
           </div>
@@ -450,36 +525,79 @@ const DonorDashboard = () => {
                   </div>
                 </div>
 
-                {/* Schools List */}
+                {/* Enhanced Schools List */}
                 {filteredSchools.length > 0 ? (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredSchools.map((school) => (
-                      <div key={school.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-white">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-900">{school.name}</h3>
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                ✓ Verified
-                              </span>
+                      <div key={school.id} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
+                        {/* School Header */}
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+                              </svg>
                             </div>
-                            
-                            <div className="space-y-2 text-sm text-gray-600 mb-4">
-                              <p><strong>UDISE ID:</strong> {school.udise_id}</p>
-                              <p><strong>Location:</strong> {school.location}</p>
-                              <p><strong>Region:</strong> {school.region}</p>
-                              <p><strong>Category:</strong> <span className="capitalize">{school.category}</span></p>
-                              <p><strong>Registered:</strong> {new Date(school.created_at).toLocaleDateString()}</p>
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{school.name}</h3>
+                              <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 shadow-sm">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Verified
+                              </span>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="border-t pt-4">
+                        {/* School Details */}
+                        <div className="space-y-3 mb-6">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <span className="font-medium">UDISE:</span>
+                            <span className="ml-1">{school.udise_id}</span>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-gray-600">
+                            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span className="font-medium">Location:</span>
+                            <span className="ml-1">{school.location}, {school.region}</span>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-gray-600">
+                            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+                            </svg>
+                            <span className="font-medium">Category:</span>
+                            <span className="ml-1 capitalize bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
+                              {school.category}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-gray-600">
+                            <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 6v6m-4-6h8m-8 0V9a2 2 0 012-2h4a2 2 0 012 2v2" />
+                            </svg>
+                            <span className="font-medium">Registered:</span>
+                            <span className="ml-1">{new Date(school.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Action Button */}
+                        <div className="pt-4 border-t border-gray-100">
                           <button
                             onClick={() => handleViewSchool(school)}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-md font-medium transition duration-200"
+                            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                           >
-                            View Students & Sponsor
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                            </svg>
+                            <span>View Students & Sponsor</span>
                           </button>
                         </div>
                       </div>

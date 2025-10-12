@@ -202,38 +202,92 @@ const SchoolDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
             <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="bg-white shadow-sm rounded-lg mb-6">
-                    <div className="px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">School Dashboard</h1>
-                                <p className="mt-1 text-sm text-gray-600">
-                                    Welcome back, {user?.name}! Manage your school and funding requests.
-                                </p>
+                {/* Enhanced Header with Educational Background */}
+                <div className="shadow-xl rounded-2xl mb-8 overflow-hidden relative">
+                    {/* Background Image */}
+                    <div 
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{
+                            backgroundImage: 'url(https://i0.wp.com/world-education-blog.org/wp-content/uploads/2015/06/9952786683_979ae8bd7c_z.jpg?w=640&ssl=1)',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center center',
+                            backgroundRepeat: 'no-repeat'
+                        }}
+                    ></div>
+                    
+                    {/* Light overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-black/50"></div>
+                    
+                    <div className="px-8 py-12 relative z-10">
+                        {/* Decorative Elements */}
+                        <div className="absolute top-4 right-4 opacity-20">
+                            <svg className="w-24 h-24 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                            </svg>
+                        </div>
+                        
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-6">
+                                    <div className="h-20 w-20 bg-yellow-400 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/20">
+                                        <span className="text-blue-600 font-bold text-3xl">शि</span>
+                                    </div>
+                                    <div>
+                                        <h1 className="text-4xl font-bold text-white mb-2" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+                                            School Dashboard
+                                        </h1>
+                                        <p className="text-white text-xl mb-1" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                                            Welcome back, <span className="font-bold text-yellow-300">{user?.name}</span>! 
+                                        </p>
+                                        <p className="text-blue-100 text-base" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                                            Manage your school and create funding requests with Shiksha Setu
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="hidden md:flex items-center space-x-4">
+                                    <button
+                                        onClick={() => loadDashboardData()}
+                                        className="bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 px-4 py-2 rounded-xl font-medium flex items-center border border-white/20 transition-all duration-200"
+                                        disabled={loading}
+                                    >
+                                        <svg className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                    {school && (
+                                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                                            <span className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-semibold ${school.verified
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-yellow-500 text-white'
+                                                }`}>
+                                                {school.verified ? '✅ Verified School' : '⏳ Pending Verification'}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center space-x-3">
-                                <button
-                                    onClick={() => loadDashboardData()}
-                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
-                                    disabled={loading}
-                                >
-                                    <svg className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    Refresh
-                                </button>
-                            </div>
+                            
+                            {/* School Info Card */}
                             {school && (
-                                <div className="text-right">
-                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${school.verified
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                        {school.verified ? '✅ Verified' : '⏳ Pending Verification'}
-                                    </span>
+                                <div className="mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="flex-shrink-0">
+                                            <svg className="w-8 h-8 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-semibold text-lg" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                                                {school.name} • UDISE: {school.udise_id}
+                                            </p>
+                                            <p className="text-blue-100 text-sm mt-1" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                                                {school.location}, {school.region} • Category: {school.category}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -275,19 +329,19 @@ const SchoolDashboard = () => {
                     </div>
                 )}
 
-                {/* School Registration */}
+                {/* Enhanced School Registration */}
                 {!school && (
-                    <div className="bg-white shadow-sm rounded-lg mb-6">
-                        <div className="px-6 py-6">
-                            <div className="text-center mb-6">
-                                <div className="mx-auto h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                                    <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <div className="bg-white shadow-xl rounded-2xl mb-8 border border-gray-100">
+                        <div className="px-8 py-8">
+                            <div className="text-center mb-8">
+                                <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 7h6m-6 4h6m-6 4h6" />
                                     </svg>
                                 </div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-2">Register Your School</h2>
-                                <p className="text-gray-600">
-                                    Register your school with UDISE ID to start creating funding requests
+                                <h2 className="text-2xl font-bold text-gray-900 mb-3">Register Your School</h2>
+                                <p className="text-gray-600 text-lg">
+                                    Join Shiksha Setu by registering your school with UDISE ID to start creating funding requests
                                 </p>
                             </div>
 
@@ -295,9 +349,12 @@ const SchoolDashboard = () => {
                                 <div className="text-center">
                                     <button
                                         onClick={() => setShowSchoolForm(true)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200"
+                                        className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 mx-auto"
                                     >
-                                        📝 Register School
+                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        <span>Register School</span>
                                     </button>
                                 </div>
                             ) : (
@@ -457,24 +514,47 @@ const SchoolDashboard = () => {
                         {/* Students Section */}
                         <StudentsManager school={school} />
 
-                        {/* Requests Section */}
-                        <div className="bg-white shadow rounded-lg">
-                            <div className="px-4 py-5 sm:p-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-medium text-gray-900">Funding Requests</h2>
+                        {/* Enhanced Requests Section */}
+                        <div className="bg-white shadow-xl rounded-2xl border border-gray-100 mb-8">
+                            <div className="px-8 py-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                            </svg>
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900">Funding Requests</h2>
+                                    </div>
                                     {school.verified && (
                                         <button
                                             onClick={() => setShowRequestForm(true)}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+                                            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2"
                                         >
-                                            Create Request
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            <span>Create Request</span>
                                         </button>
                                     )}
                                 </div>
 
                                 {!school.verified && (
-                                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md mb-4">
-                                        Your school must be verified before you can create funding requests.
+                                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 p-6 rounded-xl mb-6">
+                                        <div className="flex items-center">
+                                            <div className="flex-shrink-0">
+                                                <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3">
+                                                <h3 className="text-lg font-semibold text-yellow-800">Verification Required</h3>
+                                                <p className="text-yellow-700 mt-1">
+                                                    Your school must be verified by our admin team before you can create funding requests. 
+                                                    This ensures authenticity and builds trust with donors.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
 

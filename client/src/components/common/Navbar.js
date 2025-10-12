@@ -48,9 +48,9 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <div className="h-8 w-8 bg-yellow-400 rounded-full flex items-center justify-center mr-3">
-                <span className="text-blue-600 font-bold text-sm">EL</span>
+                <span className="text-blue-600 font-bold text-sm">शि</span>
               </div>
-              <span className="text-white text-xl font-bold">EduLink</span>
+              <span className="text-white text-xl font-bold">Shiksha Setu</span>
             </Link>
           </div>
 

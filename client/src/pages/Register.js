@@ -103,7 +103,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       <div className="min-h-screen flex">
         {/* Left side - Image and Inspiration */}
         <div className="hidden lg:flex lg:w-1/2 relative">
@@ -114,13 +114,13 @@ const Register = () => {
             }}
           >
             {/* Overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 to-purple-900/80"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-black/60"></div>
             
             {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col justify-center px-12 text-white">
               <div className="max-w-lg">
                 <h1 className="text-4xl font-bold mb-6" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-                  Transform Lives Through Education
+                  Transform Lives Through Shiksha Setu
                 </h1>
                 <p className="text-xl mb-8 leading-relaxed" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                   Join our mission to bridge the educational divide. Connect schools with donors, 
@@ -154,11 +154,11 @@ const Register = () => {
         <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
-              <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
-                <span className="text-white font-bold text-2xl">शि</span>
+              <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-600 shadow-lg">
+                <span className="text-yellow-400 font-bold text-2xl">शि</span>
               </div>
               <h2 className="mt-6 text-3xl font-bold text-gray-900">
-                Join शिक्षा सेतु
+                Join Shiksha Setu
               </h2>
               <p className="mt-2 text-gray-600">
                 Create your account and start making an impact in education
@@ -357,7 +357,7 @@ const Register = () => {
                 <button
                   type="submit"
                   disabled={loading || !formData.name || !formData.email || !formData.password || !formData.confirmPassword || formData.password !== formData.confirmPassword}
-                  className="group relative w-full flex justify-center py-4 px-6 border border-transparent text-lg font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition duration-200 hover:scale-105 shadow-lg"
+                  className="group relative w-full flex justify-center py-4 px-6 border border-transparent text-lg font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition duration-200 hover:scale-105 shadow-lg"
                 >
                   {loading ? (
                     <>

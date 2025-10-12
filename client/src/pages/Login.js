@@ -71,7 +71,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
       <div className="min-h-screen flex">
         {/* Left side - Village Classroom Image */}
         <div className="hidden lg:flex lg:w-1/2 relative">
@@ -82,13 +82,13 @@ const Login = () => {
             }}
           >
             {/* Overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/80 to-purple-900/80"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-black/60"></div>
             
             {/* Content overlay */}
             <div className="absolute inset-0 flex flex-col justify-center px-12 text-white">
               <div className="max-w-lg">
                 <h1 className="text-4xl font-bold mb-6" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-                  Welcome Back to शिक्षा सेतु
+                  Welcome Back to Shiksha Setu
                 </h1>
                 <p className="text-xl mb-8 leading-relaxed" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                   Continue your journey of transforming lives through education. 
@@ -107,7 +107,7 @@ const Login = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-yellow-300">
+                <div className="flex items-center space-x-2 text-yellow-400">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
@@ -122,14 +122,14 @@ const Login = () => {
         <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
-              <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
-                <span className="text-white font-bold text-2xl">शि</span>
+              <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-600 shadow-lg">
+                <span className="text-yellow-400 font-bold text-2xl">शि</span>
               </div>
               <h2 className="mt-6 text-3xl font-bold text-gray-900">
                 Welcome Back
               </h2>
               <p className="mt-2 text-gray-600">
-                Sign in to your शिक्षा सेतु account
+                Sign in to your Shiksha Setu account
               </p>
             </div>
 
@@ -167,7 +167,7 @@ const Login = () => {
                       type="email"
                       autoComplete="email"
                       required
-                      className="block w-full pl-10 pr-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                      className="block w-full pl-10 pr-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                       placeholder="Enter your email address"
                       value={formData.email}
                       onChange={handleChange}
@@ -192,7 +192,7 @@ const Login = () => {
                       type={showPassword ? 'text' : 'password'}
                       autoComplete="current-password"
                       required
-                      className="block w-full pl-10 pr-12 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+                      className="block w-full pl-10 pr-12 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                       placeholder="Enter your password"
                       value={formData.password}
                       onChange={handleChange}
@@ -223,7 +223,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading || !formData.email || !formData.password}
-                  className="group relative w-full flex justify-center py-4 px-6 border border-transparent text-lg font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition duration-200 hover:scale-105 shadow-lg"
+                  className="group relative w-full flex justify-center py-4 px-6 border border-transparent text-lg font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition duration-200 hover:scale-105 shadow-lg"
                   onClick={() => console.log('🔘 Login button clicked!')}
                 >
                   {loading ? (
@@ -248,7 +248,7 @@ const Login = () => {
               <div className="text-center pt-6 border-t border-gray-200">
                 <p className="text-gray-600">
                   Don't have an account?{' '}
-                  <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500 transition duration-200">
+                  <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-500 transition duration-200">
                     Create Account
                   </Link>
                 </p>
