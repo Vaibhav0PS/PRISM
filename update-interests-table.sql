@@ -9,6 +9,14 @@ ADD COLUMN IF NOT EXISTS commitment_amount DECIMAL(10,2);
 ALTER TABLE public.interests 
 ADD COLUMN IF NOT EXISTS commitment_date TIMESTAMP WITH TIME ZONE;
 
+-- Add school_id column for direct school sponsorship
+ALTER TABLE public.interests 
+ADD COLUMN IF NOT EXISTS school_id UUID REFERENCES public.schools(id);
+
+-- Add student_ids column to track which students are sponsored
+ALTER TABLE public.interests 
+ADD COLUMN IF NOT EXISTS student_ids UUID[];
+
 -- Update the trigger to set commitment_date when status changes to committed
 CREATE OR REPLACE FUNCTION update_commitment_date()
 RETURNS TRIGGER AS $$
